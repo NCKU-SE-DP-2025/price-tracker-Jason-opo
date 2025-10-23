@@ -165,13 +165,13 @@ def get_new_info(search_term, is_initial=False):
     if is_initial:
         news_pages = []
         for page_params in range(1, 10):
-            p2 = {
+            query_params = {
                 "page": page_params,
                 "id": f"search:{quote(search_term)}",
                 "channelId": 2,
                 "type": "searchword",
             }
-            response = requests.get("https://udn.com/api/more", params=p2)
+            response = requests.get("https://udn.com/api/more", params=query_params)
             news_pages.append(response.json()["lists"])
 
         for news_list in news_pages:
@@ -278,8 +278,8 @@ def session_opener():
 
 
 
-def verify(p1, p2):
-    return password_context.verify(p1, p2)
+def verify(plain_password, hashed_password):
+    return password_context.verify(plain_password, hashed_password)
 
 
 def check_user_password_is_correct(db, username, password):
