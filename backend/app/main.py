@@ -1,3 +1,27 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from app.routers import news_router, user_router
+from app.core.database import Base, engine
+
+# 建表
+Base.metadata.create_all(bind=engine)
+
+app = FastAPI()
+
+# CORS 設定
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],       # 或 ["http://localhost:8080"] 限定前端網址
+    allow_credentials=True,
+    allow_methods=["*"],       # 允許 GET/POST/PUT/DELETE/OPTIONS
+    allow_headers=["*"],       # 允許所有 headers
+)
+
+# 使用作業要求的 API prefix
+app.include_router(news_router.router, prefix="/api/v1/news", tags=["News"])
+app.include_router(user_router.router, prefix="/api/v1/users", tags=["User"])
+
+'''
 import json
 import sentry_sdk
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -530,4 +554,4 @@ def get_necessities_prices(
         "https://opendata.ey.gov.tw/api/ConsumerProtection/NecessitiesPrice",
         params={"CategoryName": category, "Name": commodity},
     ).json()
-        
+'''
