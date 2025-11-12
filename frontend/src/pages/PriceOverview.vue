@@ -9,39 +9,49 @@
     </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted } from 'vue';
+<script>
 import CategoryPrice from '@/components/CategoryPrice.vue';
 import Categories from '@/constants/categories';
 import { usePricesStore } from '@/stores/prices';
 
-// Store
-const store = usePricesStore();
-
-// 狀態
-const prices = ref({});
-
-// 元件掛載時取得資料
-onMounted(() => {
-  store.fetchPrices();
-});
-
-// 計算屬性：分類清單
-const categoryList = computed(() => Object.keys(Categories));
-
-// 計算屬性：載入狀態
-const isLoading = computed(() => store.isLoading);
-
-// 計算屬性：錯誤訊息
-const errorMessage = computed(() => store.errorMessage);
-
-// 計算屬性：更新時間
-const updateTime = computed(() => store.updatedTime);
-
-// 方法：取得分類資料
-function getPriceData(category) {
-  return store.getPricesByCategory(category);
-}
+export default {
+    name: 'PriceOverview',
+    data() {
+        return {
+            prices: {},
+        };
+    },
+    components: {
+        CategoryPrice
+    },
+    computed: {
+        categoryList() {
+            return Object.keys(Categories);
+        },
+        isLoading(){
+            const store = usePricesStore();
+            return store.isLoading;
+        },
+        errorMessage(){
+            const store = usePricesStore();
+            return store.errorMessage;
+        },
+        updateTime(){
+            const store = usePricesStore();
+            return store.updatedTime;
+        }
+    },
+    methods:{
+        getPriceData(category){
+            const store = usePricesStore();
+            return store.getPricesByCategory(category);
+        }    
+    },
+    created() {
+        const store = usePricesStore();
+        store.fetchPrices();
+    }
+};
 </script>
 
 <style scoped>

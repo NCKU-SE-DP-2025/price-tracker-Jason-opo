@@ -13,34 +13,30 @@
     </div>
 </template>
 
-<script setup>
-import { computed, ref } from 'vue';
-
-// Props
-const props = defineProps({
-  news: {
-    type: Object,
-    required: true
-  },
-  visible: {
-    type: Boolean,
-    default: false
-  }
-});
-
-// Emits
-const emit = defineEmits(['update:visible']);
-
-// 方法：關閉視窗
-function close() {
-  emit('update:visible', false);
-}
-
-// 計算屬性：格式化內容
-const formattedContent = computed(() => {
-  if (!props.news.content) return '';
-  return props.news.content.split('\r\n');
-});
+<script>
+export default {
+    props: {
+        news: {
+            type: Object,
+            required: true
+        },
+        visible: {
+            type: Boolean,
+            default: false
+        }
+    },
+    methods: {
+        close() {
+            this.$emit('update:visible', false);
+        }
+    },
+    computed:{
+        formattedContent() {
+            if(!this.news.content) return '';
+            return this.news.content.split('\r\n');
+        }
+    }
+};
 </script>
 
 <style scoped>
@@ -95,4 +91,3 @@ const formattedContent = computed(() => {
     color: #888;
 }
 </style>
-//12
