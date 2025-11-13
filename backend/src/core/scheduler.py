@@ -1,21 +1,23 @@
+import os
 from src.news.service import NewsService
 from src.news.ai_service import AIService
-import os
 
-# pytest 模式：完全不要建立 scheduler 實例
-if os.getenv("TESTING") == "1":
-    scheduler = None
-else:
+TESTING = os.getenv("TESTING") == "1"
+
+# 在測試模式下，不要載入 APScheduler，也不建立 scheduler
+if not TESTING:
     from apscheduler.schedulers.background import BackgroundScheduler
     scheduler = BackgroundScheduler()
+else:
+    scheduler = None
 
 def start_scheduler():
-    # pytest 模式不啟動 scheduler
-    if os.getenv("TESTING") == "1":
+    if TESTING:
         print("Skipping scheduler (TESTING=1).")
         return
-    
+
     from src.core.database import SessionLocal
+
     ai_service = AIService()
     news_service = NewsService(ai_service)
 
@@ -28,8 +30,7 @@ def start_scheduler():
     scheduler.start()
 
 def stop_scheduler():
-    if os.getenv("TESTING") == "1":
+    if TESTING:
         return
 
-    if scheduler:
-        scheduler.shutdown()
+    scheduler.shutdown()

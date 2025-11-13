@@ -54,8 +54,9 @@ def get_new_info(search_term: str, is_initial: bool = False):
 # 讓測試中的 patch("main.OpenAI")、patch("main.requests.get") 有東西可以 patch
 # OpenAI, requests 這兩個名字在上面已經 import 過
 
-Base.metadata.create_all(bind=engine)
-
+if os.getenv("TESTING") != "1":
+    Base.metadata.create_all(bind=engine)
+    
 app = FastAPI()
 
 app.add_middleware(
