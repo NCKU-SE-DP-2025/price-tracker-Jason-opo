@@ -16,6 +16,7 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
+      - ./backend/news_database.db:/app/news_database.db 
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - MODULE_NAME=app.main
