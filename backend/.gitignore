@@ -1,0 +1,32 @@
+# pytest cache
+.pytest_cache/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+venv310/
+**/venv/
+.env/
+
+# SQLite databases
+*.db
+
+# Coverage
+.coverage
+coverage.xml
+
+# Logs
+*.log
+
+# IDE settings
+.vscode/
+.idea/
+
+# OS junk files
+.DS_Store
+Thumbs.db

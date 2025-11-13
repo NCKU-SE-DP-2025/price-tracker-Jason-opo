@@ -1,12 +1,27 @@
-import json
-from openai import OpenAI
 import os
+import json
 
 class AIService:
-    def __init__(self):
-        self.client = OpenAI()
+    def __init__(self, api_key=None):
+        self.api_key = api_key or os.getenv("OPENAI_API_KEY")
 
+    def _get_client(self):
+        """
+        在執行 summarize / extract_keywords 時才 import main.OpenAI
+        這樣 pytest 的 patch("main.OpenAI") 一定已經生效
+        """
+        from main import OpenAI
+
+        # pytest 模式（沒有 API key）→ 用 mock OpenAI() 就好
+        if self.api_key:
+            return OpenAI(api_key=self.api_key)
+        else:
+            # 沒 API key（pytest 模式）→ 使用 mock 的 OpenAI
+            return OpenAI()
+        
     def summarize(self, content: str):
+        client = self._get_client()
+
         messages = [
             {"role": "system", 
              "content": (
@@ -16,12 +31,17 @@ class AIService:
             },
             {"role": "user", "content": content},
         ]
-        result = self.client.chat.completions.create(
-            model="gpt-3.5-turbo", messages=messages
+
+        result = client.chat.completions.create(
+            model = "gpt-3.5-turbo",
+            messages = messages
         )
+
         return json.loads(result.choices[0].message.content)
 
     def extract_keywords(self, prompt: str):
+        client = self._get_client()
+
         messages = [
             {"role": "system", 
              "content": (
@@ -33,7 +53,9 @@ class AIService:
             },
             {"role": "user", "content": prompt},
         ]
-        result = self.client.chat.completions.create(
-            model="gpt-3.5-turbo", messages=messages
+
+        result = client.chat.completions.create(
+            model = "gpt-3.5-turbo",
+            messages = messages
         )
         return result.choices[0].message.content.strip()

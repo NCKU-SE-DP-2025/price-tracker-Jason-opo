@@ -3,16 +3,16 @@ from jose import jwt
 from passlib.context import CryptContext
 from src.core.config import SECRET_KEY, ALGORITHM
 
-password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 class AuthService:
     @staticmethod
     def verify_password(plain, hashed):
-        return password_context.verify(plain, hashed)
+        return pwd_context.verify(plain, hashed)
 
     @staticmethod
     def hash_password(password):
-        return password_context.hash(password)
+        return pwd_context.hash(password)
 
     @staticmethod
     def create_access_token(data, expires_delta=None):

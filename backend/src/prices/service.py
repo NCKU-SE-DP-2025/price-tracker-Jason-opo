@@ -1,9 +1,9 @@
-import requests
-
 class PricesService:
     BASE_URL = "https://opendata.ey.gov.tw/api/ConsumerProtection/NecessitiesPrice"
 
     def get_prices(self, category=None, commodity=None):
+        from backend.main import requests
+
         try:
             response = requests.get(
                 self.BASE_URL,

@@ -1,10 +1,58 @@
+import sys
+import os
+
+# 讓 pytest 的 "from main import ..." 成功指向這份檔案
+sys.modules["main"] = sys.modules[__name__]
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+SRC_DIR = os.path.join(BASE_DIR, "src")
+sys.path.append(SRC_DIR)
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from src.core.database import Base, engine
 from src.core.scheduler import start_scheduler, stop_scheduler
 from src.auth.router import router as auth_router
 from src.news.router import router as news_router
 from src.prices.router import router as prices_router
+
+import requests
+import itertools
+from urllib.parse import quote
+from openai import OpenAI
+
+# 被測試 mock 用到的符號（測試會 patch main.OpenAI / main.requests / main.get_new_info）
+# 真正執行時如果沒被 patch，就會用這邊的實作
+def get_new_info(search_term: str, is_initial: bool = False):
+    """
+    原本 main.py 裡的 get_new_info 簡化版。
+    在測試裡會被 patch 掉，所以實作內容不重要，只是為了有這個名稱。
+    """
+    from urllib.parse import quote
+
+    if is_initial:
+        all_news_data = []
+        for p in range(1, 10):
+            params = {
+                "page": p,
+                "id": f"search:{quote(search_term)}",
+                "channelId": 2,
+                "type": "searchword",
+            }
+            response = requests.get("https://udn.com/api/more", params=params)
+            all_news_data.extend(response.json().get("lists", []))
+        return all_news_data
+    else:
+        params = {
+            "page": 1,
+            "id": f"search:{quote(search_term)}",
+            "channelId": 2,
+            "type": "searchword",
+        }
+        response = requests.get("https://udn.com/api/more", params=params)
+        return response.json().get("lists", [])
+# 讓測試中的 patch("main.OpenAI")、patch("main.requests.get") 有東西可以 patch
+# OpenAI, requests 這兩個名字在上面已經 import 過
 
 Base.metadata.create_all(bind=engine)
 
@@ -24,12 +72,47 @@ app.include_router(prices_router, prefix="/api/v1/prices", tags=["prices"])
 
 @app.on_event("startup")
 def startup_event():
-    start_scheduler()
+    # pytest 時不啟動 scheduler
+    if os.getenv("TESTING") != "1":
+        start_scheduler()
 
 @app.on_event("shutdown")
 def shutdown_event():
     stop_scheduler()
 
+# 舊程式裡用來生假 id 的 counter（測試雖然沒檢查 id，但保留比較安全）
+_id_counter = itertools.count(start=1000000)
+
+# ============================================================
+# Compatibility exports for integration tests (DO NOT REMOVE)
+# ============================================================
+
+# Database
+from src.core.database import get_db as session_opener
+
+# Auth
+from src.auth.models import User, user_news_association_table
+from src.auth.service import pwd_context  
+
+# News
+from src.news.models import NewsArticle
+from src.news.schemas import PromptRequest, NewsSumaryRequestSchema
+
+__all__ = [
+    "app",
+    "Base",
+    "User",
+    "NewsArticle",
+    "PromptRequest",
+    "NewsSumaryRequestSchema",
+    "session_opener",
+    "pwd_context",
+    "user_news_association_table",
+    "requests",          # 給 price tests mock 用
+    "get_new_info",      # 給 news tests mock 用
+    "OpenAI",            # 給 news tests mock 用
+    "_id_counter",       # search_news 用的
+]
 
 '''
 import json

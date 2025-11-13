@@ -1,11 +1,21 @@
-from apscheduler.schedulers.background import BackgroundScheduler
 from src.news.service import NewsService
 from src.news.ai_service import AIService
-from src.core.database import SessionLocal
+import os
 
-scheduler = BackgroundScheduler()
+# pytest 模式：完全不要建立 scheduler 實例
+if os.getenv("TESTING") == "1":
+    scheduler = None
+else:
+    from apscheduler.schedulers.background import BackgroundScheduler
+    scheduler = BackgroundScheduler()
 
 def start_scheduler():
+    # pytest 模式不啟動 scheduler
+    if os.getenv("TESTING") == "1":
+        print("Skipping scheduler (TESTING=1).")
+        return
+    
+    from src.core.database import SessionLocal
     ai_service = AIService()
     news_service = NewsService(ai_service)
 
@@ -18,4 +28,8 @@ def start_scheduler():
     scheduler.start()
 
 def stop_scheduler():
-    scheduler.shutdown()
+    if os.getenv("TESTING") == "1":
+        return
+
+    if scheduler:
+        scheduler.shutdown()

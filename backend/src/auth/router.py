@@ -17,7 +17,9 @@ def register_user(user: UserAuthSchema, db: Session = Depends(get_db)):
     new_user = User(username=user.username, hashed_password=hashed_pw)
     db.add(new_user)
     db.commit()
-    return {"message": "User registered successfully"}
+    #return {"message": "User registered successfully"}
+    db.refresh(new_user)
+    return new_user
 
 @router.post("/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
