@@ -45,6 +45,8 @@ jobs:
       - name: Run integration tests (with mock DB)
         run: |
           cd backend
+          if (Test-Path "news_database.db") { Remove-Item "news_database.db" }
+          if (Test-Path "test.db") { Remove-Item "test.db" }
           pytest tests/integration --cov=src --cov-report=xml --disable-warnings
 
       - name: Upload coverage report
