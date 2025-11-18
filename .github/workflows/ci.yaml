@@ -5,7 +5,7 @@ on:
     branches:
       - 'main'
       - 'develop'
-      - 'refactor/oop-structure'
+      - 'fix/oop-integration-tests'
   pull_request:
     branches:
       - 'main'
