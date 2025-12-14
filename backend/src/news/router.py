@@ -49,6 +49,7 @@ def search_news(req: PromptRequest):
 
     # 2) 透過 main.get_new_info 拿到新聞列表（在測試中被 mock）
     news_items = get_new_info(keywords, is_initial=False)
+    print(news_items)
 
     news_list = []
     for news in news_items:
