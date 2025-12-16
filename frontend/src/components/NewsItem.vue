@@ -23,42 +23,60 @@
     </div>
 </template>
 
-<script>
+<script setup>
+import { computed, ref } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useNewsStore } from '@/stores/news';
-export default {
-    props: {
-        news: {
-            type: Object,
-            required: true
-        }
-    },
-    computed: {
-        hasDetails() {
-            return this.news.reason && this.news.summary;
-        },
-        shortContent() {
-            return this.news.content.length > 200 ? this.news.content.substr(0, 200) + '...' : this.news.content;
-        },
-        isLoggedIn(){
-            const userStore = useAuthStore();
-            return userStore.isLoggedIn;
-        }
-    },
-    methods:{
-        showDialog(){
-            this.$emit('show-dialog');
-        },
-        fetchSummary(){
-            if(this.isLoading) return;
-            this.isLoading = true;
-            this.$emit('fetch-summary');
-        },
-        toggleUpvote(newsId){
-            useNewsStore().toggleUpvote(newsId);
-        }
-    }
-};
+
+// Props
+const props = defineProps({
+  news: {
+    type: Object,
+    required: true
+  }
+});
+
+// Emits
+const emit = defineEmits(['show-dialog', 'fetch-summary']);
+
+// 狀態
+const isLoading = ref(false);
+
+// Store
+const authStore = useAuthStore();
+const newsStore = useNewsStore();
+
+// Computed: 是否有詳細資料
+const hasDetails = computed(() => {
+  return props.news.reason && props.news.summary;
+});
+
+// Computed: 簡短內容
+const shortContent = computed(() => {
+  return props.news.content.length > 200 ? props.news.content.substr(0, 200) + '...' : props.news.content;
+});
+
+// Computed: 是否登入
+const isLoggedIn = computed(() => {
+  return authStore.isLoggedIn;
+});
+
+// 方法：顯示對話框
+function showDialog() {
+  emit('show-dialog');
+}
+
+// 方法：取得摘要
+function fetchSummary() {
+  if (isLoading.value) return;
+  isLoading.value = true;
+  emit('fetch-summary');
+}
+
+// 方法：切換按讚
+function toggleUpvote(newsId) {
+  newsStore.toggleUpvote(newsId);
+}
 </script>
 
 <style scoped>
@@ -162,4 +180,3 @@ export default {
 }
 @keyframes l3 {to{transform: rotate(1turn)}}
 </style>
-//hi

@@ -15,29 +15,24 @@
     </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 
-export default {
-    data() {
-        return {
-            username: '',
-            password: ''
-        };
-    },
-    methods: {
-        login() {
-            const userStore = useAuthStore();
-            userStore.login(this.username, this.password);
-        }
-    },
-    computed: {
-        loginError(){
-            const userStore = useAuthStore();
-            return userStore.getLoginError;
-        }
-    }
+// 狀態
+const username = ref('');
+const password = ref('');
+
+// Store
+const userStore = useAuthStore();
+
+// 方法：登入
+function login() {
+  userStore.login(username.value, password.value);
 }
+
+// 計算屬性：登入錯誤訊息
+const loginError = computed(() => userStore.getLoginError);
 </script>
 
 <style scoped>

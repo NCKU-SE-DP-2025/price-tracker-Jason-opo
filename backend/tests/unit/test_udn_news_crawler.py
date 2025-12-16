@@ -1,0 +1,105 @@
+import unittest
+from unittest.mock import patch, MagicMock
+from requests.models import Response
+from sqlalchemy.orm import Session
+
+from backend.src.crawler.udn_crawler import UDNCrawler
+from backend.src.crawler.exceptions import DomainMismatchException
+
+
+class TestUDNCrawler(unittest.TestCase):
+
+    def setUp(self):
+        self.scraper = UDNCrawler(timeout=5)
+
+    @patch("backend.src.crawler.udn_crawler.requests.get")
+    def test_perform_request_success(self, mock_get):
+        mock_response = MagicMock(spec=Response)
+        mock_response.status_code = 200
+        mock_get.return_value = mock_response
+
+        response = self.scraper._perform_request(params={"page": 1, "id": "search:technology"})
+        self.assertEqual(response, mock_response)
+        mock_get.assert_called_once()
+
+    @patch("backend.src.crawler.udn_crawler.requests.get")
+    def test_perform_request_failure(self, mock_get):
+        mock_get.side_effect = Exception("Network Error")
+        with self.assertRaises(Exception):
+            self.scraper._perform_request(params={"page": 1, "id": "search:technology"})
+
+    @patch("backend.src.crawler.udn_crawler.requests.get")
+    def test_fetch_news_data(self, mock_get):
+        mock_response = MagicMock(spec=Response)
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "lists": [{"title": "Test News", "titleLink": "https://udn.com/news/test-news"}]
+        }
+        mock_get.return_value = mock_response
+
+        headlines = self.scraper._fetch_news(page=1, search_term="technology")
+        self.assertEqual(len(headlines), 1)
+        self.assertEqual(headlines[0].title, "Test News")
+        self.assertEqual(headlines[0].url, "https://udn.com/news/test-news")
+
+    @patch("backend.src.crawler.udn_crawler.requests.get")
+    def test_parse_news(self, mock_get):
+        mock_response = MagicMock(spec=Response)
+        mock_response.status_code = 200
+        mock_response.text = """
+            <html>
+                <h1 class="article-content__title">Test Title</h1>
+                <time class="article-content__time">2023-09-08T00:00:00</time>
+                <section class="article-content__editor">
+                    <p>Content paragraph 1.</p>
+                    <p>Content paragraph 2.</p>
+                </section>
+            </html>
+        """
+        mock_get.return_value = mock_response
+
+        news = self.scraper.parse("https://udn.com/news/test-news")
+        self.assertEqual(news.title, "Test Title")
+        self.assertEqual(news.time, "2023-09-08T00:00:00")
+        self.assertEqual(news.content, "Content paragraph 1. Content paragraph 2.")
+
+    def test_create_search_params(self):
+        params = self.scraper._create_search_params(page=1, search_term="technology")
+        self.assertEqual(params["page"], 1)
+        self.assertEqual(params["id"], "search:technology")
+        self.assertEqual(params["channelId"], UDNCrawler.CHANNEL_ID)
+
+    @patch("backend.src.crawler.udn_crawler.Session", create=True)
+    def test_save_news(self, mock_session):
+        mock_db = MagicMock(spec=Session)
+        mock_db.add.return_value = None  # avoid side effects
+        mock_db.commit.return_value = None
+
+        # fake data persuasion for W9 only
+        from backend.src.crawler.crawler_base import News
+        news = News(
+            title="Test Title",
+            url="https://udn.com/news/test-news",
+            time="2023-09-08T00:00:00",
+            content="Test Content",
+        )
+        self.scraper.save(news, mock_db)
+
+        mock_db.add.assert_called_once()
+        mock_db.commit.assert_called_once()
+
+    def test_is_valid_url(self):
+        valid_url = "https://udn.com/news/test-news"
+        invalid_url = "https://example.com/news/test-news"
+
+        self.assertTrue(self.scraper._is_valid_url(valid_url))
+        self.assertFalse(self.scraper._is_valid_url(invalid_url))
+
+    def test_parse_invalid_domain(self):
+        invalid_url = "https://example.com/news/test-news"
+        with self.assertRaises(DomainMismatchException):
+            self.scraper.parse(invalid_url)
+
+
+if __name__ == "__main__":
+    unittest.main()
