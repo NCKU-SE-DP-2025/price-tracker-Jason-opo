@@ -4,17 +4,20 @@ on:
   push:
     branches:
       - 'main'
+      - 'develop'
+      - 'refactor/oop-structure'
   pull_request:
     branches:
       - 'main'
+      - 'develop'
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: [F74146822]
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -42,7 +45,7 @@ jobs:
           pytest tests/integration --cov=src --cov-report=xml --disable-warnings
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: coverage.xml
