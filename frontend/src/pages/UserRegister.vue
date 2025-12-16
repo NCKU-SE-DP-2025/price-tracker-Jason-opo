@@ -20,48 +20,55 @@
     </div>
 </template>
 
-<script>
+<script setup>
+import { ref } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 
-export default {
-    data() {
-        return {
-            username: '',
-            password: '',
-            passwordConfirm: '',
-            errors: {
-                username: '',
-                password: '',
-                passwordConfirm: ''
-            }
-        };
-    },
-    methods: {
-        register() {
-            if (this.validate()) {
-                const userStore = useAuthStore();
-                userStore.register(this.username, this.password);
-            }
-        },
-        validate() {
-            let valid = true;
-            this.errors = { username: '', password: '', passwordConfirm: '' };
+// 狀態
+const username = ref('');
+const password = ref('');
+const passwordConfirm = ref('');
+const errors = ref({
+  username: '',
+  password: '',
+  passwordConfirm: ''
+});
 
-            if (!this.username.trim()) {
-                this.errors.username = 'Username is required.';
-                valid = false;
-            }
-            if (!this.password) {
-                this.errors.password = 'Password is required.';
-                valid = false;
-            }
-            if (this.password !== this.passwordConfirm) {
-                this.errors.passwordConfirm = 'Passwords do not match!';
-                valid = false;
-            }
-            return valid;
-        }
-    }
+// Store
+const userStore = useAuthStore();
+
+// 方法：註冊
+function register() {
+  if (validate()) {
+    userStore.register(username.value, password.value);
+  }
+}
+
+// 方法：驗證輸入
+function validate() {
+  let valid = true;
+  errors.value = {
+    username: '',
+    password: '',
+    passwordConfirm: ''
+  };
+
+  if (!username.value.trim()) {
+    errors.value.username = 'Username is required.';
+    valid = false;
+  }
+
+  if (!password.value) {
+    errors.value.password = 'Password is required.';
+    valid = false;
+  }
+
+  if (password.value !== passwordConfirm.value) {
+    errors.value.passwordConfirm = 'Passwords do not match!';
+    valid = false;
+  }
+
+  return valid;
 }
 </script>
 

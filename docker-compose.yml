@@ -19,10 +19,11 @@ services:
       - ./backend/news_database.db:/app/news_database.db 
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - MODULE_NAME=app.main
+      - MODULE_NAME=main
       - VARIABLE_NAME=app
-      - PYTHONPATH=/app
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      - PYTHONPATH=/app:/app/src
+      - TESTING=0
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
 
   sonarqube:
