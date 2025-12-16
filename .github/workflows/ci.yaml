@@ -5,7 +5,7 @@ on:
     branches:
       - 'main'
       - 'develop'
-      - 'refactor/oop-structure'
+      - 'fix/oop-integration-tests'
   pull_request:
     branches:
       - 'main'
@@ -15,6 +15,11 @@ jobs:
   test:
     runs-on: [F74146822]
 
+    env:
+      TESTING: "1"
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -22,7 +27,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.12"
+          python-version: "3.10"
 
       - name: Install dependencies
         run: |
@@ -38,17 +43,17 @@ jobs:
       #     pytest tests/unit --cov=src --cov-report=xml --disable-warnings
 
       - name: Run integration tests (with mock DB)
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           cd backend
+          if (Test-Path "news_database.db") { Remove-Item "news_database.db" }
+          if (Test-Path "test.db") { Remove-Item "test.db" }
           pytest tests/integration --cov=src --cov-report=xml --disable-warnings
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: coverage.xml
+          path: backend/coverage.xml
 
   # lint:
   #   runs-on: ubuntu-latest
